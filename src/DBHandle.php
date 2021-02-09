@@ -61,6 +61,25 @@ class DBHandle {
 		}
 	}
 	
+	public function setNewInstanceToken(string $old_instance_token, string $new_instance_token, CommandExec $CommandExec) {
+		try {
+			$updateResult = $this->log_collection->updateOne(
+				['instance_token' => $old_instance_token],
+				['$set' => ['instance_token' => $new_instance_token]]
+			);
+			
+			$updateResult = $this->instance_collection->updateOne(
+				['instance_token' => $old_instance_token],
+				['$set' => ['instance_token' => $new_instance_token]]
+			);
+			
+		} catch (\Exception $e) {
+			$CommandExec->setStatus(false);
+			$CommandExec->setStatusMessage($e->getMessage());
+			
+		}
+	}
+	
 	public function setNewSessionToken(string $instance_token, string $new_session_token, CommandExec $CommandExec) {
 		try {
 			$updateResult = $this->log_collection->updateOne(

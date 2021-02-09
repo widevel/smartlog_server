@@ -59,6 +59,13 @@ class CommandExec {
 			
 		}
 		
+		if($this->command_name == 'set_new_instance_token') {
+			if(!property_exists($this->data, 'old_instance_token')) return $this->setResponse(false, 'Field "old_instance_token" is required');
+			if(!property_exists($this->data, 'new_instance_token')) return $this->setResponse(false, 'Field "new_instance_token" is required');
+			
+			getBootstrap()->getDbHandle()->setNewInstanceToken($this->data->old_instance_token, $this->data->new_instance_token, $this);
+		}
+		
 		if($this->command_name == 'set_new_session_token') {
 			if(!property_exists($this->data, 'instance_token')) return $this->setResponse(false, 'Field "instance_token" is required');
 			if(!property_exists($this->data, 'new_session_token')) return $this->setResponse(false, 'Field "new_session_token" is required');
