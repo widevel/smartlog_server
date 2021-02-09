@@ -2,7 +2,7 @@
 
 namespace Widevel\SmartlogServer;
 
-require_once 'debug_config.php';
+require_once __DIR__ . './debug_config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 function getBootstrap() :Bootstrap {
