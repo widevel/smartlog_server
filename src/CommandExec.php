@@ -24,6 +24,9 @@ class CommandExec {
 	}
 	
 	public function exec() {
+		
+		
+		
 		if($this->command_name == 'log') {
 			if(!property_exists($this->data, 'uniq_id')) return $this->setResponse(false, 'Field "uniq_id" is required');
 			
@@ -43,8 +46,24 @@ class CommandExec {
 			$logObject->setLevel($this->data->level);
 			$logObject->setDate($this->data->date);
 			if(property_exists($this->data, 'data')) $logObject->setData($this->data->data);
+			if(property_exists($this->data, 'session_token')) $logObject->setSessionToken($this->data->session_token);
 			
 			getBootstrap()->getDbHandle()->insertLog($logObject, $this);
+		}
+		
+		if($this->command_name == 'update_instance_data') {
+			if(!property_exists($this->data, 'instance_token')) return $this->setResponse(false, 'Field "instance_token" is required');
+			if(!property_exists($this->data, 'data')) return $this->setResponse(false, 'Field "data" is required');
+			
+			getBootstrap()->getDbHandle()->updateInstance($this->data->instance_token, $this->data->data, $this);
+			
+		}
+		
+		if($this->command_name == 'set_new_session_token') {
+			if(!property_exists($this->data, 'instance_token')) return $this->setResponse(false, 'Field "instance_token" is required');
+			if(!property_exists($this->data, 'new_session_token')) return $this->setResponse(false, 'Field "new_session_token" is required');
+			
+			getBootstrap()->getDbHandle()->setNewSessionToken($this->data->instance_token, $this->data->new_session_token, $this);
 		}
 	}
 	
@@ -64,70 +83,4 @@ class CommandExec {
 	public function getHttpRespondeCode() :int { return $this->status ? 200 : 500; }
 	
 	public function getHttpJsonRespondeCode() :string { return $this->status ? 'OK' : 'KO'; }
-}
-
-/*
-PREDEFINED FIELDS:
-	(array) tags
-	(int) level
-	(string) tracking
-	(string) session
-	(string) instance
-	(string) message
-	(int) timestamp
-	(int) milliseconds
-	(object) data
-	attachments: array(
-		object: {
-			(string) name : "attachment_name",
-			(string) data : "attachment_binary_data",
-			(bool) base64 : "decode data base64",
-			(bool) gz : "decode data gz",
-		}
-	)
-*/
-
-function pushToMongo(stdclass $data) {
-	
-	global $log_collection, $session_collection, $instance_collection;
-	
-	if(property_exists($data, 'attachments')) {
-		$attachments = $data->attachments;
-		
-		if(is_array($attachments)) {
-			foreach($attachments as $index => $attachment) {
-				$attachments[$index] = saveAttachment($attachment);
-			}
-		}
-	}
-	
-	$data->date = new \MongoDB\BSON\UTCDateTime($data->timestamp);
-	
-	unset($data->timestamp);
-	
-	$data->unique = hash('sha256', serialize($data));
-	
-	if($log_collection->findOne(['unique' => $data->unique]) !== null) return;
-	
-	$insertOneResult = $log_collection->insertOne($data);
-	
-	if($data->session !== null && $session_collection->findOne(['hash' => $data->session]) === null) $session_collection->insertOne(['hash' => $data->session, 'date' => $data->date]);
-	if($data->instance !== null && $instance_collection->findOne(['hash' => $data->instance]) === null) $instance_collection->insertOne(['hash' => $data->instance, 'session' => $data->session, 'date' => $data->date]);
-	
-}
-
-function saveAttachment(stdclass $attachment) {
-	if(property_exists($attachment, 'base64') && $attachment->base64 === true) {
-		$attachment->data = base64_decode($attachment->data);
-	}
-	
-	if(property_exists($attachment, 'gz') && $attachment->gz === true) {
-		$attachment->data = gzinflate($attachment->data);
-	}
-	
-	file_put_contents('attachments/' . $attachment->name, $attachment->data);
-	
-	unset($attachment->data);
-	
-	return $attachment;
 }
