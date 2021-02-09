@@ -5,7 +5,7 @@ require_once 'includes/bootstrap.php';
 
 use Widevel\SmartlogServer\ParseInbound;
 
-$serialized_data = new \stdclass;
+/*$serialized_data = new \stdclass;
 $serialized_data->uniq_id = hash('sha256', mt_rand());
 $serialized_data->instance_token = hash('sha256', mt_rand());
 $serialized_data->message = "Hola mundo";
@@ -19,6 +19,8 @@ $inbound_var = [
 	'serialized_data' => base64_encode(gzdeflate(serialize($serialized_data), 9))
 ];
 
-
-
 new ParseInbound($inbound_var, ParseInbound::CLIENT_HTTP);
+*/
+
+
+new ParseInbound($_POST, ParseInbound::CLIENT_HTTP);
