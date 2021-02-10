@@ -47,15 +47,19 @@ class CommandExec {
 			$logObject->setDate($this->data->date);
 			if(property_exists($this->data, 'data')) $logObject->setData($this->data->data);
 			if(property_exists($this->data, 'session_token')) $logObject->setSessionToken($this->data->session_token);
+			if(property_exists($this->data, 'name')) $logObject->setName($this->data->name);
+			if(property_exists($this->data, 'tags')) $logObject->setTags($this->data->tags);
 			
 			getBootstrap()->getDbHandle()->insertLog($logObject, $this);
 		}
 		
 		if($this->command_name == 'update_instance_data') {
 			if(!property_exists($this->data, 'instance_token')) return $this->setResponse(false, 'Field "instance_token" is required');
+			if(!property_exists($this->data, 'session_token')) return $this->setResponse(false, 'Field "session_token" is required');
 			if(!property_exists($this->data, 'data')) return $this->setResponse(false, 'Field "data" is required');
+			if(!property_exists($this->data, 'date')) return $this->setResponse(false, 'Field "date" is required');
 			
-			getBootstrap()->getDbHandle()->updateInstance($this->data->instance_token, $this->data->data, $this);
+			getBootstrap()->getDbHandle()->updateInstance($this->data->instance_token, $this->data->session_token, $this->data->data, $this->data->date, $this);
 			
 		}
 		
@@ -69,8 +73,9 @@ class CommandExec {
 		if($this->command_name == 'set_new_session_token') {
 			if(!property_exists($this->data, 'instance_token')) return $this->setResponse(false, 'Field "instance_token" is required');
 			if(!property_exists($this->data, 'new_session_token')) return $this->setResponse(false, 'Field "new_session_token" is required');
+			if(!property_exists($this->data, 'date')) return $this->setResponse(false, 'Field "date" is required');
 			
-			getBootstrap()->getDbHandle()->setNewSessionToken($this->data->instance_token, $this->data->new_session_token, $this);
+			getBootstrap()->getDbHandle()->setNewSessionToken($this->data->instance_token, $this->data->new_session_token, $this->data->date, $this);
 		}
 	}
 	

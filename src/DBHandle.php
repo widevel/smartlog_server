@@ -47,13 +47,20 @@ class DBHandle {
 		}
 	}
 	
-	public function updateInstance(string $instance_token, $data, CommandExec $CommandExec) {
+	public function updateInstance(string $instance_token, string $session_token = null, $data = null, $date, CommandExec $CommandExec) {
 		
 		try {
-			$updateResult = $this->instance_collection->updateOne(
-				['instance_token' => $instance_token],
-				['$set' => ['data' => $data]]
-			);
+			if($this->instance_collection->findOne(['instance_token' => $instance_token]) === null) {
+				$date = get_class($date) == \DateTime::class ? self::convertDate($date) : $date;
+				$this->instance_collection->insertOne(['instance_token' => $instance_token, 'session_token' => $session_token, 'date' => $date]);
+			} else {
+				$updateResult = $this->instance_collection->updateOne(
+					['instance_token' => $instance_token],
+					['$set' => ['data' => $data]]
+				);
+			}
+			
+			
 		} catch (\Exception $e) {
 			$CommandExec->setStatus(false);
 			$CommandExec->setStatusMessage($e->getMessage());
@@ -63,15 +70,26 @@ class DBHandle {
 	
 	public function setNewInstanceToken(string $old_instance_token, string $new_instance_token, CommandExec $CommandExec) {
 		try {
+			
+			$instance_row = $this->instance_collection->findOne(['instance_token' => $new_instance_token]);
+			
+			if($instance_row !== null) {
+				$old_instance_row = $this->instance_collection->findOne(['instance_token' => $old_instance_token]);
+				$this->instance_collection->deleteOne(['instance_token' => $old_instance_token]);
+				$this->updateInstance($new_instance_token, $instance_row->session_token, $old_instance_row->data, $instance_row->date, $CommandExec);
+			} else {
+				$updateResult = $this->instance_collection->updateOne(
+					['instance_token' => $old_instance_token],
+					['$set' => ['instance_token' => $new_instance_token]]
+				);
+			}
+			
 			$updateResult = $this->log_collection->updateOne(
 				['instance_token' => $old_instance_token],
 				['$set' => ['instance_token' => $new_instance_token]]
 			);
 			
-			$updateResult = $this->instance_collection->updateOne(
-				['instance_token' => $old_instance_token],
-				['$set' => ['instance_token' => $new_instance_token]]
-			);
+			
 			
 		} catch (\Exception $e) {
 			$CommandExec->setStatus(false);
@@ -80,8 +98,12 @@ class DBHandle {
 		}
 	}
 	
-	public function setNewSessionToken(string $instance_token, string $new_session_token, CommandExec $CommandExec) {
+	public function setNewSessionToken(string $instance_token, string $new_session_token, \DateTime $date, CommandExec $CommandExec) {
 		try {
+			
+			if($this->session_collection->findOne(['session_token' => $new_session_token]) === null) 
+				$this->session_collection->insertOne(['session_token' => $new_session_token, 'date' => self::convertDate($date)]);
+			
 			$updateResult = $this->log_collection->updateOne(
 				['instance_token' => $instance_token],
 				['$set' => ['session_token' => $new_session_token]]
