@@ -122,6 +122,6 @@ class DBHandle {
 	}
 	
 	private static function convertDate(\DateTime $date) {
-		return new \MongoDB\BSON\UTCDateTime((int) ($date->format('U') . substr($date->format('u'), 0, 3)));
+		return new \MongoDB\BSON\UTCDateTime((int) $date->format('U') * 1000);
 	}
 }
