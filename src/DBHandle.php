@@ -52,7 +52,7 @@ class DBHandle {
 		try {
 			if($this->instance_collection->findOne(['instance_token' => $instance_token]) === null) {
 				$date = get_class($date) == \DateTime::class ? self::convertDate($date) : $date;
-				$this->instance_collection->insertOne(['instance_token' => $instance_token, 'session_token' => $session_token, 'date' => $date]);
+				$this->instance_collection->insertOne(['instance_token' => $instance_token, 'session_token' => $session_token, 'date' => $date, 'data' => $data]);
 			} else {
 				$updateResult = $this->instance_collection->updateOne(
 					['instance_token' => $instance_token],
